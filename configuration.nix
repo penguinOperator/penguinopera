@@ -1,101 +1,82 @@
 { config, pkgs, ... }:
 
 {
-  # Hostname
-  networking.hostName = "nixos";
+  imports = [
+    ./hardware-configuration.nix
+  ];
 
-  # Network
-  networking.networkmanager.enable = true;
+  # Basic system info
+  system.stateVersion = "25.05"; # match your NixOS version
+  networking.hostName = "nixos"; # change if you want
 
   # Timezone and locale
-  time.timeZone = "UTC";
+  time.timeZone = "Asia/Taipei";
   i18n.defaultLocale = "en_US.UTF-8";
-  console.keyMap = "us";
 
-  # Root filesystem — replace /dev/sda1 with your actual root partition
-  fileSystems."/" = {
-    device = "/dev/sda1";
-    fsType = "ext4";
-  };
-
-  # Bootloader (GRUB BIOS)
-  boot.loader.grub = {
-    enable = true;
-    version = 2;
-    devices = [ "/dev/sda" ];  # Update if needed
-  };
-
-  # State version (your nixos version)
-  system.stateVersion = "25.05";
-
-  # X server + SDDM display manager
-  services.xserver.enable = true;
-
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = false;
-    autoLogin.enable = true;
-    autoLogin.user = "abc";
-  };
-
-  # Hyprland compositor (Wayland)
-  services.xserver.windowManager.hyprland.enable = true;
-
-  # Pipewire for sound (replace deprecated sound.enable)
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-    alsa.enable = true;
-  };
-
-  # Users
-  users.users.abc = {
+  # User account
+  users.users.6hw = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
-    shell = pkgs.zsh;
-    # For security, replace with your password hash later
-    password = "abc";  
+    extraGroups = [ "wheel" "networkmanager" "video" ];
+    password = "yourpassword"; # Change this, or better use hashed password
+    shell = pkgs.fish;
   };
 
-  # Sudo permissions
+  # Enable sudo for wheel group without password (optional)
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
-  # System packages
-  environment.systemPackages = with pkgs; [
-    kitty
-    firefox
-    neovim
-    git
-    wget
-    curl
-    unzip
-    zsh
-    starship
-    waybar
-    foot
-    hyprpaper
-    xdg-utils
-    pavucontrol
-    nerdfonts
-  ];
+  # Enable networking - both ethernet and wifi (NetworkManager)
+  networking.networkmanager.enable = true;
+
+  # Enable sound with PulseAudio (default)
+  sound.enable = true;
+  hardware.pulseaudio.enable = true;
 
   # Fonts
-  fonts.packages = with pkgs; [
+  fonts.fontconfig.enable = true;
+  fonts.fonts = with pkgs; [
     noto-fonts
     noto-fonts-cjk
     noto-fonts-emoji
-    liberation_ttf
-    font-awesome
-    (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
   ];
 
-  nixpkgs.config.allowUnfree = true;
+  # Enable SDDM as display manager
+  services.xserver.enable = true;
+  services.xserver.displayManager.sddm.enable = true;
+  services.xserver.desktopManager.hyprland.enable = true;
 
-  # Enable zsh shell globally
-  programs.zsh.enable = true;
+  # Use Wayland (Hyprland is Wayland compositor)
+  services.xserver.displayManager.sddm.wayland = true;
 
-  # Enable xdg portals for Wayland apps
-  xdg.portal.enable = true;
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  # Enable Hyprland from nixpkgs
+  environment.systemPackages = with pkgs; [
+    hyprland
+    wayland-protocols
+    xorg.xwayland
+    fish
+    starship
+    kitty
+    wlogout
+  ];
+
+  # Boot loader (adjust for BIOS or UEFI)
+  boot.loader.grub.enable = true;
+  boot.loader.grub.version = 2;
+  boot.loader.grub.device = "/dev/sda"; # Adjust if your disk is different
+
+  # Enable NTP for time synchronization
+  services.ntp.enable = true;
+
+  # Misc
+  system.autoUpgrade.enable = true;
+  system.autoUpgrade.allowReboot = true;
+
+  # Enable OpenSSH (optional)
+  services.openssh.enable = true;
+
+  # Enable firewall (basic)
+  networking.firewall.enable = true;
+
+  # Other services or packages you want can be added here
+
 }
