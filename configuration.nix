@@ -1,78 +1,84 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ ];
+  # Basic imports
+  imports = [];
 
-  # Bootloader
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  # Hostname & networking
+  # Set hostname
   networking.hostName = "nixos";
+
+  # Enable networking with NetworkManager for internet
   networking.networkmanager.enable = true;
 
-  # Locale
+  # Set timezone and locale
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
-  # Root filesystem - update device accordingly
+  # Root filesystem, replace /dev/sda1 if different
   fileSystems."/" = {
-    device = "/dev/sda1"; # <-- replace this with your root partition
+    device = "/dev/sda1";
     fsType = "ext4";
   };
 
-  # Set system version explicitly
+  # Explicitly set stateVersion for stability
   system.stateVersion = "25.05";
 
-  # Enable user
-  users.users.abc = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
-    shell = pkgs.zsh;
-    password = "abc"; # for VM demo only, change on real system
+  # Enable X server - required for SDDM
+  services.xserver.enable = true;
+
+  # Display manager SDDM with auto-login
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = false;
+    autoLogin = {
+      enable = true;
+      user = "abc";
+    };
   };
 
-  # Sound via pipewire (remove sound.enable)
+  # Enable Hyprland (Wayland compositor)
+  programs.hyprland.enable = true;
+
+  # Enable pipewire audio system
   services.pipewire = {
     enable = true;
     pulse.enable = true;
     alsa.enable = true;
-    jack.enable = false;
   };
 
-  # Hyprland + Wayland essentials
-  programs.hyprland.enable = true;
-  xdg.portal.enable = true;
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-
-  # Display Manager with autologin
-  services.displayManager.sddm = {
-    enable = true;
-    autoLogin.enable = true;
-    autoLogin.user = "abc";
+  # User definition
+  users.users.abc = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
+    shell = pkgs.zsh;
+    password = "abc"; # Change this ASAP in a real system
   };
 
-  # Packages
+  # Enable sudo for users in wheel group
+  security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
+
+  # Basic packages to install
   environment.systemPackages = with pkgs; [
     kitty
-    waybar
     firefox
-    zsh
-    git
     neovim
-    hyprpaper
-    foot
+    git
     wget
     curl
     unzip
+    zsh
+    starship
+    waybar
+    foot
+    hyprpaper
     xdg-utils
-    xdg-user-dirs
     pavucontrol
     nerdfonts
-    starship
   ];
 
+  # Fonts config
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk
@@ -82,6 +88,13 @@
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
   ];
 
+  # Allow unfree software for fonts/codecs
   nixpkgs.config.allowUnfree = true;
+
+  # Enable zsh shell globally
   programs.zsh.enable = true;
+
+  # Enable xdg portals for Wayland apps
+  xdg.portal.enable = true;
+  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 }
