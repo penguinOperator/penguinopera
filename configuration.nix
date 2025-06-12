@@ -1,12 +1,10 @@
 { config, pkgs, ... }:
 
 {
-  imports = [];
-
   # Hostname
   networking.hostName = "nixos";
 
-  # Networking: NetworkManager for internet
+  # Network
   networking.networkmanager.enable = true;
 
   # Timezone and locale
@@ -14,24 +12,25 @@
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
-  # Filesystem - change /dev/sda1 if your root partition differs
+  # Root filesystem — replace /dev/sda1 with your actual root partition
   fileSystems."/" = {
     device = "/dev/sda1";
     fsType = "ext4";
   };
 
-  # Bootloader GRUB for BIOS systems (most VMs)
+  # Bootloader (GRUB BIOS)
   boot.loader.grub = {
     enable = true;
     version = 2;
-    devices = [ "/dev/sda" ];  # Replace if your disk is different
+    devices = [ "/dev/sda" ];  # Update if needed
   };
 
-  # State version for stability
+  # State version (your nixos version)
   system.stateVersion = "25.05";
 
-  # X server & display manager (SDDM) with auto-login
+  # X server + SDDM display manager
   services.xserver.enable = true;
+
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;
@@ -39,25 +38,26 @@
     autoLogin.user = "abc";
   };
 
-  # Hyprland (Wayland compositor)
-  programs.hyprland.enable = true;
+  # Hyprland compositor (Wayland)
+  services.xserver.windowManager.hyprland.enable = true;
 
-  # Audio via Pipewire
+  # Pipewire for sound (replace deprecated sound.enable)
   services.pipewire = {
     enable = true;
     pulse.enable = true;
     alsa.enable = true;
   };
 
-  # User definition
+  # Users
   users.users.abc = {
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
     shell = pkgs.zsh;
-    password = "abc";  # Change this ASAP
+    # For security, replace with your password hash later
+    password = "abc";  
   };
 
-  # Enable sudo for wheel group without password (optional)
+  # Sudo permissions
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
@@ -90,10 +90,9 @@
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
   ];
 
-  # Allow unfree packages (fonts/codecs)
   nixpkgs.config.allowUnfree = true;
 
-  # Enable zsh globally
+  # Enable zsh shell globally
   programs.zsh.enable = true;
 
   # Enable xdg portals for Wayland apps
