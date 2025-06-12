@@ -1,46 +1,48 @@
 { config, pkgs, ... }:
 
 {
-  # Basic imports
   imports = [];
 
-  # Set hostname
+  # Hostname
   networking.hostName = "nixos";
 
-  # Enable networking with NetworkManager for internet
+  # Networking: NetworkManager for internet
   networking.networkmanager.enable = true;
 
-  # Set timezone and locale
+  # Timezone and locale
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
-  # Root filesystem, replace /dev/sda1 if different
+  # Filesystem - change /dev/sda1 if your root partition differs
   fileSystems."/" = {
     device = "/dev/sda1";
     fsType = "ext4";
   };
 
-  # Explicitly set stateVersion for stability
+  # Bootloader GRUB for BIOS systems (most VMs)
+  boot.loader.grub = {
+    enable = true;
+    version = 2;
+    devices = [ "/dev/sda" ];  # Replace if your disk is different
+  };
+
+  # State version for stability
   system.stateVersion = "25.05";
 
-  # Enable X server - required for SDDM
+  # X server & display manager (SDDM) with auto-login
   services.xserver.enable = true;
-
-  # Display manager SDDM with auto-login
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = false;
-    autoLogin = {
-      enable = true;
-      user = "abc";
-    };
+    autoLogin.enable = true;
+    autoLogin.user = "abc";
   };
 
-  # Enable Hyprland (Wayland compositor)
+  # Hyprland (Wayland compositor)
   programs.hyprland.enable = true;
 
-  # Enable pipewire audio system
+  # Audio via Pipewire
   services.pipewire = {
     enable = true;
     pulse.enable = true;
@@ -52,14 +54,14 @@
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
     shell = pkgs.zsh;
-    password = "abc"; # Change this ASAP in a real system
+    password = "abc";  # Change this ASAP
   };
 
-  # Enable sudo for users in wheel group
+  # Enable sudo for wheel group without password (optional)
   security.sudo.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
-  # Basic packages to install
+  # System packages
   environment.systemPackages = with pkgs; [
     kitty
     firefox
@@ -78,7 +80,7 @@
     nerdfonts
   ];
 
-  # Fonts config
+  # Fonts
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk
@@ -88,10 +90,10 @@
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
   ];
 
-  # Allow unfree software for fonts/codecs
+  # Allow unfree packages (fonts/codecs)
   nixpkgs.config.allowUnfree = true;
 
-  # Enable zsh shell globally
+  # Enable zsh globally
   programs.zsh.enable = true;
 
   # Enable xdg portals for Wayland apps
