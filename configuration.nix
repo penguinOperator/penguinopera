@@ -7,31 +7,72 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Basic networking
+  # Hostname & networking
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
-  # Timezone and locale
+  # Locale
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
 
-  # Enable necessary X11 services
-  services.xserver.enable = true;
-  services.xserver.displayManager.sddm.enable = true;
-  services.xserver.windowManager.hyprland.enable = true;
+  # Root filesystem - update device accordingly
+  fileSystems."/" = {
+    device = "/dev/sda1"; # <-- replace this with your root partition
+    fsType = "ext4";
+  };
 
-  # Pipewire audio
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
+  # Set system version explicitly
+  system.stateVersion = "25.05";
+
+  # Enable user
+  users.users.abc = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
+    shell = pkgs.zsh;
+    password = "abc"; # for VM demo only, change on real system
+  };
+
+  # Sound via pipewire (remove sound.enable)
   services.pipewire = {
     enable = true;
     pulse.enable = true;
     alsa.enable = true;
-    jack.enable = true;
+    jack.enable = false;
   };
 
-  # Fonts
+  # Hyprland + Wayland essentials
+  programs.hyprland.enable = true;
+  xdg.portal.enable = true;
+  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+
+  # Display Manager with autologin
+  services.displayManager.sddm = {
+    enable = true;
+    autoLogin.enable = true;
+    autoLogin.user = "abc";
+  };
+
+  # Packages
+  environment.systemPackages = with pkgs; [
+    kitty
+    waybar
+    firefox
+    zsh
+    git
+    neovim
+    hyprpaper
+    foot
+    wget
+    curl
+    unzip
+    xdg-utils
+    xdg-user-dirs
+    pavucontrol
+    nerdfonts
+    starship
+  ];
+
   fonts.packages = with pkgs; [
     noto-fonts
     noto-fonts-cjk
@@ -41,63 +82,6 @@
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
   ];
 
-  # Enable automatic login (optional)
-  services.displayManager.autoLogin = {
-    enable = true;
-    user = "abc";
-  };
-
-  # XDG desktop portal
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config.common.default = "*";
-  };
-
-  # Environment variables for Wayland
-  environment.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-    MOZ_ENABLE_WAYLAND = "1";
-    QT_QPA_PLATFORM = "wayland";
-    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-  };
-
-  # Users
-  users.users.abc = {
-    isNormalUser = true;
-    shell = pkgs.zsh;
-    extraGroups = [ "wheel" "networkmanager" "audio" "video" ];
-  };
-
-  # Packages
-  environment.systemPackages = with pkgs; [
-    hyprland
-    kitty
-    waybar
-    mako
-    wlogout
-    swaylock
-    wofi
-    firefox
-    git
-    neovim
-    curl
-    wget
-    unzip
-    zsh
-    starship
-    xdg-utils
-    xdg-user-dirs
-    file
-    pavucontrol
-    htop
-    pciutils
-    usbutils
-  ];
-
-  # Enable zsh
-  programs.zsh.enable = true;
-
-  # Allow unfree packages (e.g., some fonts or firmwares)
   nixpkgs.config.allowUnfree = true;
+  programs.zsh.enable = true;
 }
